@@ -4,7 +4,7 @@ library(igraph)
 source("read.gedcom.R")
 
 ## Read data
-sample <- read.gedcom("http://heiner-eichmann.de/gedcom/allged.ged")
+sample <- read.gedcom("mytree.ged")
 
 ## Convert to network
 tree <- filter(sample, !is.na(Father_id), !is.na(Mother_id)) %>%
@@ -29,7 +29,7 @@ plot(tree,
      vertex.shape = V(tree)$Gender,
      vertex.label = V(tree)$Name,
      vertex.label.cex = 1,
-     edge.arrow.size = 1,
+     edge.arrow.size = 1
      )
 
 

@@ -8,6 +8,9 @@ read.gedcom <- function(gedcom.loc) {
     require(stringr)
     require(tibble)
     require(dplyr)
+    require(lubridate)
+  
+    my_formats <- c('dmY','%d/%m/%Y','%d %m %Y','%d %b %Y','d/m/Y','Y','%Y')
 
     gedcom <- str_squish(readLines(gedcom.loc))
     idv <- sum(grepl("^0.*INDI$", gedcom))
@@ -34,12 +37,13 @@ read.gedcom <- function(gedcom.loc) {
             family[id, "id"] <- unlist(str_split(gedcom[l], "@"))[2]
             l <- l + 1
             while(!str_detect(gedcom[l], "^0")) {
-                if (grepl("NAME", gedcom[l]))
+                if (grepl("NAME", gedcom[l])) {
                     family[id, "Full_Name"] <- extract(gedcom[l], "NAME")
-                if (grepl("SEX", gedcom[l]))
+                    l <- l + 1
+                } else if (grepl("SEX", gedcom[l])) {
                     family[id, "Gender"] <- extract(gedcom[l], "SEX")
-                l <- l + 1
-                if (grepl("BIRT|CHR", gedcom[l])) {
+                    l <- l + 1
+                } else if (grepl("BIRT|CHR", gedcom[l])) {
                     l <- l + 1
                     while (!str_detect(gedcom[l], "^1")) {
                         if (grepl("DATE", gedcom[l]))
@@ -48,8 +52,7 @@ read.gedcom <- function(gedcom.loc) {
                             family[id, "Birth_Place"] <- extract(gedcom[l], "PLAC")
                         l <- l + 1
                     }
-                }
-                if (grepl("DEAT|BURI", gedcom[l])) {
+                } else if (grepl("DEAT|BURI", gedcom[l])) {
                     l <- l + 1
                     while (!str_detect(gedcom[l], "^1")) {
                         if (grepl("DATE", gedcom[l]))
@@ -58,6 +61,8 @@ read.gedcom <- function(gedcom.loc) {
                             family[id, "Death_Place"] <- extract(gedcom[l], "PLAC")
                         l <- l + 1
                     }
+                } else {
+                  l <- l + 1
                 }
             }
         }
@@ -79,8 +84,8 @@ read.gedcom <- function(gedcom.loc) {
     }
     family %>%
         mutate(Full_Name = gsub("/", "", str_trim(Full_Name)),
-               Birth_Date = as.Date(family$Birth_Date, format = "%d %b %Y"),
-               Death_Date = as.Date(family$Death_Date, format = "%d %b %Y")) %>%
+               Birth_Date = parse_date_time(family$Birth_Date, my_formats),
+               Death_Date = parse_date_time(family$Death_Date, my_formats)) %>%
         return()
 }
 
